@@ -4,12 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n \"SERVER,WEB\" -c \"bgBlue.bold,bgMagenta.bold\" \"node server.js\" \"vite\"",
-    "web": "vite",
-    "server": "node server.js",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
+  "dev": "concurrently -k -n \"SERVER,WEB\" -c \"bgBlue.bold,bgMagenta.bold\" \"node server.js\" \"vite\"",
+  "server": "node server.js",
+  "build": "vite build",
+  "start": "node server.js"
+},
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.5",
@@ -32,3 +31,4 @@
     "vite": "^5.4.6"
   }
 }
+
