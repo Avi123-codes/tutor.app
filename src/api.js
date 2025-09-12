@@ -1,37 +1,38 @@
-// src/api.js
-// Use Vite proxy: client calls "/api/*", dev proxy forwards to the server port.
+const API_BASE =
+  (import.meta.env.VITE_API_BASE && import.meta.env.VITE_API_BASE.replace(/\/+$/, "")) ||
+  "";
 
-const API_BASE = "";
-; // same-origin (Vite will proxy to the server)
-
+// Helper to parse JSON or throw with detail
 async function jsonOrThrow(res) {
-  let bodyText = '';
-  try { bodyText = await res.text(); } catch {}
-  let json;
-  try { json = bodyText ? JSON.parse(bodyText) : null; } catch { json = null; }
+  let text = "";
+  try { text = await res.text(); } catch {}
+  let json = null;
+  try { json = text ? JSON.parse(text) : null; } catch {}
   if (!res.ok) {
-    const reason = json?.error || bodyText || `HTTP ${res.status}`;
+    const reason = (json && (json.error || json.message)) || text || `HTTP ${res.status}`;
     throw new Error(reason);
   }
   return json ?? {};
 }
 
 export async function streamChat(messages, onAssistantText) {
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages }),
+  const url = `${API_BASE}/api/chat`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages })
   });
   const data = await jsonOrThrow(res);
-  if (typeof onAssistantText === 'function') onAssistantText(data.text ?? '');
+  if (typeof onAssistantText === "function") onAssistantText(data.text ?? "");
 }
 
 export async function chatWithImage(file, prompt, onAssistantText) {
+  const url = `${API_BASE}/api/chat-image`;
   const form = new FormData();
-  form.append('image', file);
-  form.append('prompt', prompt);
+  form.append("image", file);
+  form.append("prompt", prompt || "");
 
-  const res = await fetch('/api/chat-image', { method: 'POST', body: form });
+  const res = await fetch(url, { method: "POST", body: form });
   const data = await jsonOrThrow(res);
-  if (typeof onAssistantText === 'function') onAssistantText(data.text ?? '');
+  if (typeof onAssistantText === "function") onAssistantText(data.text ?? "");
 }
