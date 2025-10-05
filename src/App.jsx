@@ -1,4 +1,4 @@
-// src/App.jsx
+
 import React, { useMemo, useState, useEffect, useContext, createContext } from "react";
 import {
   HashRouter,
@@ -26,10 +26,8 @@ import {
 } from "lucide-react";
 import { streamChat } from "./api";
 
-/**************************************
- * Ultra-robust, sandbox-safe storage helpers
- **************************************/
-const STATE_KEY = "__tutor_app_state_v2__"; // stores data URL string
+//helpers for localStorage state management 
+const STATE_KEY = "__tutor_app_state_v2__";
 
 function canUseLocalStorage() {
   try {
@@ -164,9 +162,7 @@ const KEYS = {
   CURRENT_USER: "currentUser",
 };
 
-/**************************************
- * Minimal Auth (client-side mock)
- **************************************/
+//Authentication 
 const AuthCtx = createContext(null);
 function hash(pw) {
   try {
@@ -219,9 +215,7 @@ function PrivateRoute({ children }) {
   return children;
 }
 
-/**************************************
- * App Shell (light theme only; no dark/light toggle)
- **************************************/
+//Website's shell
 function Shell({ children }) {
   const { user, signOut } = useAuth();
   return (
@@ -264,9 +258,7 @@ function Shell({ children }) {
   );
 }
 
-/**************************************
- * Welcome
- **************************************/
+//Welcom Page
 function Welcome() {
   const nav = useNavigate();
   return (
@@ -281,9 +273,7 @@ function Welcome() {
   );
 }
 
-/**************************************
- * Auth screens (same UX, light-only)
- **************************************/
+//Screen where the person logs in and signs up
 function Login({ role }) {
   const nav = useNavigate();
   const { signIn } = useAuth();
@@ -300,41 +290,76 @@ function Login({ role }) {
   }
 
   return (
-    <section className="relative isolate">
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-indigo-100/60 to-transparent" />
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-16 md:grid-cols-2 md:items-center">
-        <div className="hidden md:block">
-          <h2 className="text-4xl font-semibold leading-tight">{role === "student" ? "Students" : "Parents"} Portal</h2>
-          <p className="mt-3 text-gray-600">Sign in to access your dashboard, chat, tips and schedule.</p>
-        </div>
-        <div className="mx-auto w-full max-w-md">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-lg">
-            <div className="mb-4 flex items-center gap-2">
-              <Lock className="h-5 w-5" />
-              <h3 className="text-xl font-semibold">Sign in</h3>
+  <section className="relative isolate">
+    <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-indigo-100/60 to-transparent" />
+    <div className="mx-auto grid max-w-6xl gap-8 px-4 py-16 md:grid-cols-2 md:items-center">
+      <div className="hidden md:block">
+        <h2 className="text-4xl font-semibold leading-tight">
+          {role === "student" ? "Students" : "Parents"} Portal
+        </h2>
+        <p className="mt-3 text-gray-600">
+          Sign in to access your dashboard, chat, tips and schedule.
+        </p>
+      </div>
+      <div className="mx-auto w-full max-w-md">
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-lg">
+          <div className="mb-4 flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            <h3 className="text-xl font-semibold">Sign in</h3>
+          </div>
+
+          {err && (
+            <div className="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">
+              {err}
             </div>
-            {err && <div className="mb-3 rounded-lg bg-red-50 p-2 text-sm text-red-800">{err}</div>}
-            <form onSubmit={submit} className="grid gap-3">
-              <label className="text-sm">
-                <span className="mb-1 block opacity-80">Email</span>
-                <input required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 shadow-sm outline-none focus:ring-2 focus:ring-indigo-500" />
-              </label>
-              <label className="text-sm">
-                <span className="mb-1 block opacity-80">Password</span>
-                <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 shadow-sm outline-none focus:ring-2 focus:ring-indigo-500" />
-              </label>
-              <button className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-indigo-700">
-                <Mail className="h-4 w-4" /> Sign in
-              </button>
-            </form>
-            <div className="mt-4 text-sm">
-              New here? <Link to={`/signup?role=${role}`} className="inline-flex items-center gap-1 underline"><UserPlus className="h-4 w-4"/>Create an account</Link>
-            </div>
+          )}
+
+          <form onSubmit={submit} className="grid gap-3">
+            <label className="text-sm">
+              <span className="mb-1 block opacity-80">Email</span>
+              <input
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 shadow-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </label>
+            <label className="text-sm">
+              <span className="mb-1 block opacity-80">Password</span>
+              <input
+                required
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 shadow-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </label>
+            <button className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-indigo-700">
+              <Mail className="h-4 w-4" /> Sign in
+            </button>
+          </form>
+
+          {/* 🔔 Reminder about parent-student sync */}
+          <p className="mt-3 text-xs text-gray-500">
+            Note: Parents and students should use the <strong>same email</strong> so
+            that schedules and progress stay synced.
+          </p>
+
+          <div className="mt-4 text-sm">
+            New here?{" "}
+            <Link
+              to={`/signup?role=${role}`}
+              className="inline-flex items-center gap-1 underline"
+            >
+              <UserPlus className="h-4 w-4" />
+              Create an account
+            </Link>
           </div>
         </div>
       </div>
-    </section>
-  );
+    </div>
+  </section>
+);
 }
 
 function SignUp() {
@@ -385,9 +410,7 @@ function SignUp() {
   );
 }
 
-/**************************************
- * Side Navigation
- **************************************/
+//Side navigation menu
 function SideNav({ role }) {
   const [open, setOpen] = useState(true);
   const base = role === "student" ? "/student" : "/parent";
@@ -416,9 +439,7 @@ function SideNav({ role }) {
   );
 }
 
-/**************************************
- * Utilities & business logic
- **************************************/
+//Variables to be used later
 const studentTips = [
   "Set short daily goals",
   "Review mistakes weekly",
@@ -471,9 +492,7 @@ export function predictScore(practiceArr, lastExam) {
   return Math.round(0.6 * avgPractice + 0.4 * exam);
 }
 
-/**************************************
- * Student Home
- **************************************/
+//Home page for students
 function StudentHome() {
   const nav = useNavigate();
   const quote = useRandomQuote();
@@ -503,9 +522,7 @@ function Tile({ onClick, icon: Icon, title }) {
   );
 }
 
-/**************************************
- * Tips page (different content for parents vs students)
- **************************************/
+//Tips page for both students and parents
 function TipsPage({ role }) {
   const items = role === "parent" ? parentTips : studentTips;
   return (
@@ -521,9 +538,7 @@ function TipsPage({ role }) {
   );
 }
 
-/**************************************
- * Calendar utils
- **************************************/
+//Calendar
 function getMonthMatrix(year, month /* 0-index */) {
   const first = new Date(year, month, 1);
   const last = new Date(year, month + 1, 0);
@@ -547,10 +562,7 @@ function getMonthMatrix(year, month /* 0-index */) {
   return weeks;
 }
 
-/**************************************
- * Student Schedule – real calendar grid + uploads
- * (writes to shared keys so parents see it immediately)
- **************************************/
+//Schedule page 
 function StudentSchedule() {
   const [cursor, setCursor] = useState(() => new Date());
   const [activities, setActivities] = useState(() => storage.get(KEYS.STUDENT_ACTIVITIES, {}));
@@ -647,10 +659,7 @@ function StudentSchedule() {
   );
 }
 
-/**************************************
- * Parent Home & Schedule
- * (reads the same shared data keys as Student)
- **************************************/
+//Home page for parents
 function ParentHome() {
   const nav = useNavigate();
   return (
@@ -665,16 +674,16 @@ function ParentHome() {
     </div>
   );
 }
-
+//Schedule page for parents
 function ParentSchedule() {
   const [target, setTarget] = useState(() => storage.get(KEYS.TARGET_SCORE, 75));
   const [examDate, setExamDate] = useState(() => storage.get(KEYS.EXAM_DATE, ""));
-  const activities = storage.get(KEYS.STUDENT_ACTIVITIES, {});  // shared with student
-  const filesByDay = storage.get(KEYS.ATTACHMENTS, {});         // shared with student
+  const activities = storage.get(KEYS.STUDENT_ACTIVITIES, {});  
+  const filesByDay = storage.get(KEYS.ATTACHMENTS, {});         
   const lockIn = computeLockIn(examDate);
   useEffect(() => storage.set(KEYS.TARGET_SCORE, target), [target]);
 
-  // Build a recent feed of activities & uploads (latest first)
+  // Shows what the student has been doing recently
   const recentItems = Object.keys({...activities, ...filesByDay})
     .filter(isISODate)
     .sort((a, b) => (a < b ? 1 : -1))
@@ -729,9 +738,7 @@ function ParentSchedule() {
   );
 }
 
-/**************************************
- * Score Predictor (Parents)
- **************************************/
+//Simple score predictor for parents
 function ScorePredictor() {
   const [practice, setPractice] = useState(["", "", "", "", ""]);
   const [exam, setExam] = useState("");
@@ -763,9 +770,7 @@ function ScorePredictor() {
   );
 }
 
-/**************************************
- * Chat Page (inline component) – uses backend /api/chat via streamChat
- **************************************/
+//AI Chat page
 function ChatPage({ role }) {
   const roleName = role === "parent" ? "parent" : "student";
   const [messages, setMessages] = useState([
@@ -873,9 +878,7 @@ function ChatPage({ role }) {
 }
 
 
-/**************************************
- * Layout wrappers
- **************************************/
+//Layouts for student and parent
 function StudentLayout() {
   return (
     <div className="flex">
@@ -893,9 +896,7 @@ function ParentLayout() {
   );
 }
 
-/**************************************
- * Router + Provider
- **************************************/
+//Main app component with routing
 export default function App() {
   return (
     <HashRouter>
@@ -929,9 +930,7 @@ export default function App() {
   );
 }
 
-/**************************************
- * DEV TESTS (unchanged)
- **************************************/
+// Simple dev tests for key functions
 (function runDevTests() {
   try {
     const today = new Date();

@@ -1,122 +1,107 @@
-// server.js (ESM)
+// Run with: npm run server
+// Requires: npm i express cors morgan multer dotenv @google/generative-ai
+
 import express from "express";
-import morgan from "morgan";
 import cors from "cors";
+import morgan from "morgan";
 import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
 
+// Configuring environment variables
+const PORT = Number(process.env.PORT || 8787);
+const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
+
+// If person has forgotten to enter the key, exit with error
+if (!GEMINI_KEY) {
+  console.error("❌ GEMINI_API_KEY is missing in .env");
+  process.exit(1);
+}
+
+const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+const MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+
+// App
 const app = express();
-const PORT = process.env.PORT || 8788;
-
-// Logging & JSON
-app.use(morgan("dev"));
-app.use(express.json({ limit: "2mb" }));
-
-// CORS (relaxed for local dev)
 app.use(cors());
+app.use(express.json({ limit: "2mb" }));
+app.use(morgan("dev"));
 
-// Health endpoints
-app.get("/health", (req, res) => {
+// memory storage for image uploads
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
+
+// To check health
+app.get("/health", async (req, res) => {
   res.json({
     ok: true,
-    hasKey: Boolean(process.env.GOOGLE_API_KEY),
-    model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
-    envFrom: process.cwd(),
-    cwd: process.cwd()
+    hasKey: !!GEMINI_KEY,
+    model: MODEL,
+    port: PORT,
   });
 });
-app.get("/healthz", (req, res) => res.json({ ok: true }));
 
-// --- Gemini client ---
-const apiKey = process.env.GOOGLE_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
-const textModel = genAI.getGenerativeModel({
-  model: process.env.GEMINI_MODEL || "gemini-1.5-flash"
-});
-
-// ---- /api/chat (text) ----
+// Chat-based chatbot using Gemini api
 app.post("/api/chat", async (req, res) => {
   try {
-    if (!apiKey) return res.status(500).json({ error: "Missing GOOGLE_API_KEY" });
+    const { messages } = req.body || {};
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: "Body must include { messages: Array }" });
+    }
 
-    const { messages = [] } = req.body || {};
-    const coachPreamble =
-      "You are a friendly study coach for primary/middle school. Be concise, actionable, and encouraging.";
+    
+    const preface =
+      "You are a friendly study coach for school students. Be concise and helpful. Explain step by step. Have clear formatting.";
+    const chatText =
+      messages.map(m => `${m.role}: ${m.content}`).join("\n");
 
-    const convo = (Array.isArray(messages) ? messages : [])
-      .map(m => `${m.role === "user" ? "Student" : "Coach"}: ${m.content}`)
-      .join("\n");
+    const model = genAI.getGenerativeModel({ model: MODEL });
+    const result = await model.generateContent([preface, "\n\n", chatText]);
+    const text = result?.response?.text?.() ?? "";
 
-    const prompt = `${coachPreamble}\n\nConversation so far:\n${convo}\n\nCoach:`;
-
-    const result = await textModel.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }]
-    });
-
-    const text =
-      result.response?.text?.() ||
-      result.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "I’m not sure how to answer that yet.";
-
-    res.json({ text });
+    return res.json({ text });
   } catch (err) {
-    console.error("[/api/chat] error:", err);
-    res.status(500).json({ error: "chat_failed" });
+    console.error("Chat error:", err);
+    const msg = err?.message || "Server error";
+    return res.status(500).json({ error: msg });
   }
 });
 
-// ---- /api/chat-image (image + prompt) ----
-const upload = multer({ storage: multer.memoryStorage() });
+// Attempt to use image input in chat
 app.post("/api/chat-image", upload.single("image"), async (req, res) => {
   try {
-    if (!apiKey) return res.status(500).json({ error: "Missing GOOGLE_API_KEY" });
-    if (!req.file) return res.status(400).json({ error: "No image uploaded" });
+    const file = req.file;
+    const prompt = (req.body?.prompt || "").toString();
 
-    const prompt =
-      (req.body?.prompt || "Explain this image for a student learning context.").toString();
-    const mime = req.file.mimetype || "image/png";
-    const b64 = req.file.buffer.toString("base64");
+    if (!file) return res.status(400).json({ error: "image file is required" });
+    if (!prompt) return res.status(400).json({ error: "prompt is required" });
 
-    const result = await textModel.generateContent({
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }, { inlineData: { mimeType: mime, data: b64 } }]
-        }
-      ]
-    });
+    const mimeType = file.mimetype || "image/png";
+    const base64 = file.buffer.toString("base64");
 
-    const text =
-      result.response?.text?.() ||
-      result.response?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "I couldn’t read that image.";
+    const model = genAI.getGenerativeModel({ model: MODEL });
+    const result = await model.generateContent([
+      { text: "You are a helpful study coach. Explain clearly and step by step." },
+      { text: prompt },
+      {
+        inlineData: {
+          mimeType,
+          data: base64,
+        },
+      },
+    ]);
 
-    res.json({ text });
+    const text = result?.response?.text?.() ?? "";
+    return res.json({ text });
   } catch (err) {
-    console.error("[/api/chat-image] error:", err);
-    res.status(500).json({ error: "chat_image_failed" });
+    console.error("Image chat error:", err);
+    const msg = err?.message || "Server error";
+    return res.status(500).json({ error: msg });
   }
 });
 
-// ---- Serve built frontend (when you run `npm run build`) ----
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const distDir = path.join(__dirname, "dist");
-app.use(express.static(distDir));
-
-// SPA fallback (skip API & health routes)
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api/") || req.path.startsWith("/health")) return next();
-  res.sendFile(path.join(distDir, "index.html"));
-});
-
+// When server is ran
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Gemini server running on http://localhost:${PORT}`);
 });
-
-
-
