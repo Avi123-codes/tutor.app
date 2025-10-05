@@ -1,194 +1,182 @@
 Tutor.Web
 
-A lightweight tutoring web app with Student and Parent portals:
+A lightweight tutoring web app with Student and Parent portals.
 
-🔐 Simple in-browser “accounts” (stored in localStorage)
+Features:
 
-💬 AI Chatbot powered by Google Gemini
+Simple in-browser “accounts” stored in localStorage
 
-📅 Student schedule calendar with drag-and-drop file attachments
+AI Chatbot powered by Google Gemini
 
-💡 Tips & Tricks pages for students and parents
+Student schedule calendar with drag-and-drop file attachments
 
-📈 Parent score predictor
+Tips and Tricks pages for students and parents
 
-🧭 Clean UI built with React, Vite, and Tailwind CSS
+Parent score predictor
 
-⚠️ Authentication in this demo is for local/offline use only — not production secure.
+Clean UI built with React, Vite, and Tailwind CSS
 
-🧩 Tech Stack
-Layer	Technologies
-Frontend	React 18, Vite, React Router, Tailwind CSS, lucide-react
-Backend	Node.js (Express), @google/generative-ai, cors, morgan, multer, dotenv
-Runtime	Node.js ≥ 18
-📁 Project Structure
+Note: Authentication in this demo is for local or offline use only and is not production secure.
+
+Tech Stack
+
+Frontend: React 18, Vite, React Router, Tailwind CSS, lucide-react
+Backend: Node.js (Express), @google/generative-ai, cors, morgan, multer, dotenv
+Runtime: Node.js version 18 or higher
+
+Project Structure
+
 tutor.web/
 ├─ src/
-│  ├─ api.js              # Frontend helper that streams chat from backend
-│  ├─ App.jsx             # Main app (routes, UI, auth, state)
-│  ├─ main.jsx            # React entry point
-│  ├─ index.css           # Tailwind entry
-│  └─ ...
+│ ├─ api.js (Frontend helper that streams chat from backend)
+│ ├─ App.jsx (Main app: routes, UI, authentication, state)
+│ ├─ main.jsx (React entry point)
+│ ├─ index.css (Tailwind entry)
+│ └─ ...
 ├─ index.html
-├─ server.js              # Express server (Gemini integration)
-├─ .env.example           # Template for environment variables
+├─ server.js (Express server with Gemini integration)
+├─ .env.example (Template for environment variables)
 ├─ package.json
 ├─ postcss.config.js
 ├─ tailwind.config.js
 └─ vite.config.js
 
-⚙️ Setup Instructions
-1️⃣ Clone & Install
+Setup Instructions
+
+Clone and install
 git clone https://github.com/Avi123-codes/tutor.web.git
+
 cd tutor.web
 npm install
 
-2️⃣ Configure Environment Variables
-
-Your real .env file should not be committed.
-Instead, copy the example file and fill in your details:
+Configure environment variables
+Your real .env file should not be committed. Instead, copy the example file and fill in your details:
 
 cp .env.example .env
 
-
 Then open .env and insert your Gemini API key:
 
-# Google Generative AI API Key
 GEMINI_API_KEY=your_api_key_here
-
-# Optional server port (default: 8787)
 PORT=8787
 
+Get your Gemini API key from Google AI Studio → API Keys (https://makersuite.google.com/app/apikey
+).
+You might also have to update the Gemini model based on the latest version of the Gemini model.
+Keep this file private and never push .env to GitHub.
 
-Get your Gemini API key from Google AI Studio → API Keys
-.
-Keep this file private — never push .env to GitHub.
-
-3️⃣ Run the Backend
-
-Start the Express server:
-
+Run the backend
 npm run server
-# or
+or
 node server.js
 
-
-Runs on http://localhost:8787
+The backend runs on http://localhost:8787
  by default.
 
-4️⃣ Run the Frontend
-
+Run the frontend
 In a separate terminal:
-
 npm run dev
-
-
 Then visit http://localhost:5173
 
-5️⃣ Optional: Run Both Together
-
+Optional: run both together
 Install concurrently and add a script:
 
 npm i -D concurrently
 
+Add to package.json:
 
-In your package.json:
-
-{
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "server": "node server.js",
-    "dev:all": "concurrently \"npm run server\" \"npm run dev\""
-  }
+"scripts": {
+"dev": "vite",
+"build": "vite build",
+"preview": "vite preview",
+"server": "node server.js",
+"dev:all": "concurrently "npm run server" "npm run dev""
 }
 
-
-Now start both at once:
-
+Run both:
 npm run dev:all
 
-🌐 Frontend Overview
-Main Routes (App.jsx)
-Path	Description
-/	Welcome page
-/login/student, /login/parent	Simple sign-in
-`/signup?role=student	parent`
-/student/*	Student dashboard (Chat, Tips, Schedule)
-/parent/*	Parent dashboard (Chat, Tips, Schedule, Score Predictor)
-Features
+Frontend Overview
 
-Local state storage: Uses localStorage for session data
+Main routes in App.jsx:
 
-AI Chat: Integrates Gemini API via backend streaming
+/ - Welcome page
+/login/student - Student sign-in
+/login/parent - Parent sign-in
+/signup?role=student - Student account creation
+/signup?role=parent - Parent account creation
+/student/* - Student dashboard (Chat, Tips, Schedule)
+/parent/* - Parent dashboard (Chat, Tips, Schedule, Score Predictor)
 
-Calendar: Drag-and-drop file uploads per day
+Features include:
 
-Score Predictor: Calculates progress based on previous exams
+Local state storage using localStorage
 
-Responsive UI: Tailwind + lucide icons
+AI Chat integration with Gemini API via backend
 
-🧠 Backend Overview (server.js)
+Calendar with drag-and-drop file uploads
+
+Score predictor for tracking progress
+
+Responsive layout with Tailwind and lucide-react icons
+
+Backend Overview (server.js)
 
 Built with Express
 
 Uses:
+cors for cross-origin requests
+morgan for logging
+multer for file handling
+dotenv for environment variables
+@google/generative-ai for Gemini chat integration
 
-cors — Cross-origin support
+Exposes an endpoint such as /api/chat/stream used by src/api.js
 
-morgan — Logging
+The Gemini API key is read from .env and should only exist server-side.
 
-multer — File handling
+Environment and Security Notes
 
-dotenv — Loads .env
+Never commit .env files
 
-@google/generative-ai — Gemini chat integration
-
-Exposes an endpoint (e.g., /api/chat/stream) consumed by src/api.js.
-
-The Gemini API key is only read from .env. Keep it server-side.
-
-💡 Environment & Security Notes
-
-Never commit .env — .env.example is safe to share.
+.env.example is safe to share
 
 Revoke any exposed API key on Google AI Studio
-.
 
-Use a proper auth & database if you expand beyond local demos.
+Use proper authentication and a real database for production
 
-Always sanitize uploaded files if you make uploads persistent.
+Sanitize and validate uploads before making them persistent
 
-🔧 Build & Deploy
-Build the Frontend
+Build and Deploy
+
+Build the frontend:
 npm run build
+This creates a production build in the dist folder.
 
-
-Outputs production build to dist/.
-
-Deploy
-
-Frontend: Vercel, Netlify, GitHub Pages
-
+Deployment:
+Frontend: Vercel, Netlify, or GitHub Pages
 Backend: Render, Railway, Fly.io, or any Node host
+Set environment variables (GEMINI_API_KEY, PORT) in your hosting environment
+Update the API URL in src/api.js to match your deployed backend
 
-Set environment variables (GEMINI_API_KEY, PORT) in your host dashboard
+Troubleshooting
 
-Update API URL in src/api.js to match your deployed backend
+CORS error:
+Ensure cors() is enabled in server.js
+401 or key error:
+Check .env and restart backend
+Blank page:
+Run npm install again or check console logs
+Chat not responding:
+Verify backend URL in src/api.js and ensure the server is running
 
-🚨 Troubleshooting
-Problem	Solution
-CORS error	Ensure cors() is enabled in server.js
-401 / key error	Check .env key and restart the backend
-Blank page	Run npm install again or check Vite logs
-Chat not responding	Verify backend URL in src/api.js and ensure server is running
-🧾 License
+License (MIT License)
 
-MIT License — free to use, modify, and distribute.
 
-❤️ Acknowledgements
+Acknowledgements
 
 Google @google/generative-ai SDK
+React
+Vite
+Tailwind CSS
+lucide-react
 
-React, Vite, Tailwind CSS, lucide-react
